@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Multi-Agentic Code Debugger</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .panel h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .editor-wrapper {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .CodeMirror {
+            height: 500px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-copy {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .btn-copy:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .status-panel {
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .result-panel {
+            grid-column: 1 / -1;
+        }
+
+        .result-content {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .errors-section, .fixes-section, .summary-section {
+            margin-bottom: 35px;
+        }
+        
+        .errors-section .section-title,
+        .fixes-section .section-title {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #60a5fa;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .error-item.syntax {
+            border-left-color: #ef4444;
+        }
+
+        .error-item.logical {
+            border-left-color: #f59e0b;
+        }
+
+        .error-item.warning {
+            border-left-color: #eab308;
+        }
+
+        .error-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+            color: #ffffff;
+        }
+
+        .error-line {
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .error-description {
+            margin-left: 30px;
+            opacity: 1;
+            line-height: 1.6;
+            color: #e5e7eb;
+            font-size: 0.95rem;
+        }
+
+        .fixes-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .fix-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            gap: 10px;
+            color: #e5e7eb;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .fix-item:last-child {
+            border-bottom: none;
+        }
+
+        .fix-number {
+            font-weight: bold;
+            min-width: 30px;
+            color: #ffffff;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%);
+            border: 3px solid rgba(16, 185, 129, 0.6);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .summary-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            opacity: 1;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .summary-divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.5), transparent);
+            margin: 20px 0;
+        }
+
+        .fixed-code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .success { 
+            color: #4ade80 !important; 
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+        }
+        .error { 
+            color: #f87171 !important; 
+        }
+        .warning { 
+            color: #fbbf24 !important; 
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideInRight 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Multi-Agentic Code Debugger</h1>
+            <p class="subtitle">Powered by AI agents • Automatic bug detection & fixing</p>
+        </header>
+
+        <div class="controls">
+            <button id="debugBtn" class="btn-primary">
+                <span>🔍</span>
+                <span>Debug Code</span>
+            </button>
+            <button id="clearBtn" class="btn-secondary">
+                <span>🗑️</span>
+                <span>Clear</span>
+            </button>
+            <button id="exampleBtn" class="btn-secondary">
+                <span>📝</span>
+                <span>Load Example</span>
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h2>
+                    <span>📝</span>
+                    <span>Your Code</span>
+                </h2>
+                <div class="editor-wrapper">
+                    <textarea id="codeInput"></textarea>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>
+                    <span>📊</span>
+                    <span>Status</span>
+                </h2>
+                <div class="status-panel" id="statusPanel">
+                    <div class="status-item">
+                        <span style="font-size: 1.5rem;">💡</span>
+                        <div>
+                            <div style="font-weight: 600;">Ready</div>
+                            <div style="opacity: 0.8;">Enter your buggy code and click Debug!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel result-panel" id="resultPanel" style="display: none;">
+            <h2>
+                <span>✨</span>
+                <span>Analysis Results</span>
+            </h2>
+            <div class="result-content" id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('codeInput'), {
+            mode: 'python',
+            theme: 'dracula',
+            lineNumbers: true,
+            indentUnit: 4,
+            indentWithTabs: false,
+            lineWrapping: true,
+        });
+
+        const debugBtn = document.getElementById('debugBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const exampleBtn = document.getElementById('exampleBtn');
+        const statusPanel = document.getElementById('statusPanel');
+        const resultPanel = document.getElementById('resultPanel');
+        const resultContent = document.getElementById('resultContent');
+
+        // Example buggy code
+        const exampleCode = `def calculate_average(numbers)
+    total = 0
+    for num in numbers
+        total += num
+    return total / len(numbers
+
+def find_maximum(nums):
+    max_val = nums[0]
+    for i in range(len(nums)):
+        if nums[i] > max_val
+            max_val = nums[i]
+    return max_val
+
+def factorial(n)
+    result = 1
+    for i in range(1, n):
+        result *= i
+    return result
+
+# Test the functions
+result = calculate_average([1, 2, 3, 4, 5])
+print(result)`;
+
+        // Load example code
+        exampleBtn.addEventListener('click', () => {
+            editor.setValue(exampleCode);
+        });
+
+        // Clear editor
+        clearBtn.addEventListener('click', () => {
+            editor.setValue('');
+            resultPanel.style.display = 'none';
+            statusPanel.innerHTML = `
+                <div class="status-item">
+                    <span style="font-size: 1.5rem;">💡</span>
+                    <div>
+                        <div style="font-weight: 600;">Ready</div>
+                        <div style="opacity: 0.8;">Enter your buggy code and click Debug!</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Show loading state
+        function showLoading() {
+            statusPanel.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>
+                        <div style="font-weight: 600;">Analyzing your code...</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">
+                            AI agents are working on it
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show copy notification
+        function showCopyNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification';
+            notification.innerHTML = '✅ Code copied to clipboard!';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyNotification();
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy code. Please select and copy manually.');
+            });
+        }
+
+        // Show results
+        function showResults(data) {
+            const result = data.result;
+            const status = result.status;
+            
+            // Debug: Log the result to see what we're getting
+            console.log('Debug - Full result:', result);
+            console.log('Debug - errors_found:', result.errors_found, 'type:', typeof result.errors_found);
+            console.log('Debug - fix_attempts:', result.fix_attempts, 'type:', typeof result.fix_attempts);
+            
+            if (status === 'FIXED' || status === 'SUCCESS') {
+                statusPanel.innerHTML = `
+                    <div class="status-item" style="background: rgba(16, 185, 129, 0.2);">
+                        <span style="font-size: 1.5rem;">✅</span>
+                        <div>
+                            <div style="font-weight: 600; color: #4ade80;">Success!</div>
+                            <div style="opacity: 0.9;">Code has been debugged successfully</div>
+                        </div>
+                    </div>
+                `;
+
+                let html = '';
+
+                // Errors Section
+                if (result.errors_detail && result.errors_detail.length > 0) {
+                    html += `
+                        <div class="errors-section">
+                            <div class="section-title">
+                                🔍 Found ${result.errors_found || result.errors_detail.length} error(s):
+                            </div>
+                    `;
+                    
+                    result.errors_detail.forEach((error, index) => {
+                        const errorClass = error.type.toLowerCase();
+                        html += `
+                            <div class="error-item ${errorClass}">
+                                <div class="error-header">
+                                    <span>${index + 1}.</span>
+                                    <span>${error.severity}</span>
+                                    <span>[${error.type}]</span>
+                                    <span class="error-line">Line ${error.line}</span>
+                                </div>
+                                <div class="error-description">
+                                    → ${error.description}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                }
+
+                // Fixes Section
+                if (result.fixes_applied && result.fixes_applied.length > 0) {
+                    html += `
+                        <div class="fixes-section">
+                            <div class="section-title">
+                                💡 What was fixed:
+                            </div>
+                            <div class="fixes-box">
+                    `;
+                    
+                    result.fixes_applied.forEach((fix, index) => {
+                        html += `
+                            <div class="fix-item">
+                                <div class="fix-number">${index + 1}.</div>
+                                <div>
+                                    ${fix.description}
+                                    ${fix.line ? `<span style="color: #60a5fa;"> (Line ${fix.line})</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Summary Section - Extract values properly
+                const errorsFound = typeof result.errors_found === 'number' ? result.errors_found : 
+                                   (result.errors_detail ? result.errors_detail.length : 0);
+                const fixAttempts = typeof result.fix_attempts === 'number' ? result.fix_attempts : 1;
+                
+                html += `
+                    <div class="summary-section">
+                        <div class="summary-divider"></div>
+                        <div class="section-title" style="font-size: 1.5rem; text-align: center; margin-bottom: 20px;">
+                            📋 SUMMARY
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <div class="summary-label">Status</div>
+                                    <div class="summary-value success">✅ FIXED</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Errors Found</div>
+                                    <div class="summary-value">${errorsFound}</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Fix Attempts</div>
+                                    <div class="summary-value">${fixAttempts}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-divider"></div>
+                    </div>
+                `;
+
+                // Fixed Code Section
+                html += `
+                    <div style="margin-top: 35px;">
+                        <div class="fixed-code-header">
+                            <div class="section-title">
+                                🎯 Fixed Code:
+                            </div>
+                            <button class="btn-copy" onclick="copyFixedCode()">
+                                📋 Copy Code
+                            </button>
+                        </div>
+                        <div class="editor-wrapper">
+                            <textarea id="fixedCode"></textarea>
+                        </div>
+                    </div>
+                `;
+
+                resultContent.innerHTML = html;
+                resultPanel.style.display = 'block';
+
+                // Scroll to results
+                resultPanel.scrollIntoView({ behavior: 'smooth' });
+
+                // Initialize CodeMirror for fixed code
+                setTimeout(() => {
+                    window.fixedEditor = CodeMirror.fromTextArea(document.getElementById('fixedCode'), {
+                        mode: 'python',
+                        theme: 'dracula',
+                        lineNumbers: true,
+                        readOnly: true,
+                    });
+                    window.fixedEditor.setValue(result.final_code || 'No fixed code available');
+                }, 100);
+
+            } else {
+                statusPanel.innerHTML = `
+                    <div class="status-item" style="background: rgba(239, 68, 68, 0.2);">
+                        <span style="font-size: 1.5rem;">⚠️</span>
+                        <div>
+                            <div style="font-weight: 600; color: #f87171;">Unable to Fix</div>
+                            <div style="opacity: 0.9;">${result.message || 'Could not automatically fix the code'}</div>
+                        </div>
+                    </div>
+                `;
+                resultPanel.style.display = 'none';
+            }
+        }
+
+        // Copy fixed code function
+        window.copyFixedCode = function() {
+            if (window.fixedEditor) {
+                const code = window.fixedEditor.getValue();
+                copyToClipboard(code);
+            }
+        };
+
+        // Show error
+        function showError(message) {
+            statusPanel.innerHTML = `
+                <div class="status-item" style="background: rgba(239, 68, 68, 0.2);">
+                    <span style="font-size: 1.5rem;">❌</span>
+                    <div>
+                        <div style="font-weight: 600; color: #f87171;">Error</div>
+                        <div style="opacity: 0.9;">${message}</div>
+                    </div>
+                </div>
+            `;
+            resultPanel.style.display = 'none';
+        }
+
+        // Debug code
+        debugBtn.addEventListener('click', async () => {
+            const code = editor.getValue().trim();
+            
+            if (!code) {
+                showError('Please enter some code to debug');
+                return;
+            }
+
+            debugBtn.disabled = true;
+            showLoading();
+            resultPanel.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/debug', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    showResults(data);
+                } else {
+                    showError(data.message || 'An error occurred during debugging');
+                }
+            } catch (error) {
+                showError('Failed to connect to the server. Please make sure the backend is running.');
+                console.error('Error:', error);
+            } finally {
+                debugBtn.disabled = false;
+            }
+        });
+
+        // Set default example on load
+        editor.setValue(exampleCode);
+    </script>
+</body>
+</html>
