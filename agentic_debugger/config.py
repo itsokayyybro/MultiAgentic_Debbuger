@@ -1,17 +1,35 @@
 """
 Configuration Module
 
-Using google.generativeai with available models
+Supports multiple LLM providers (Gemini, Ollama, Mock)
 """
 
 import os
 
 # =============================================================================
-# GOOGLE AI (Gemini) CONFIGURATION
+# LLM PROVIDER SELECTION
 # =============================================================================
 
+# LLM_PROVIDER can be: "gemini", "ollama", "mock"
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "").strip().lower()
+
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
-USE_GOOGLE_AI = bool(GOOGLE_API_KEY)
+
+# Ollama defaults (local)
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434").strip()
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b").strip()
+OLLAMA_TIMEOUT = float(os.environ.get("OLLAMA_TIMEOUT", "60"))
+
+# If provider not set, auto-pick based on available config
+if not LLM_PROVIDER:
+    if GOOGLE_API_KEY:
+        LLM_PROVIDER = "gemini"
+    elif OLLAMA_MODEL or OLLAMA_HOST:
+        LLM_PROVIDER = "ollama"
+    else:
+        LLM_PROVIDER = "mock"
+
+USE_GOOGLE_AI = LLM_PROVIDER == "gemini" and bool(GOOGLE_API_KEY)
 
 # =============================================================================
 # MODEL CONFIGURATION
@@ -73,8 +91,8 @@ DEBUG_ORCHESTRATOR = os.environ.get("DEBUG_ORCHESTRATOR", "false").lower() == "t
 # VALIDATION
 # =============================================================================
 
-if USE_GOOGLE_AI and not GOOGLE_API_KEY:
-    print("⚠️  USE_GOOGLE_AI is True but GOOGLE_API_KEY is not set")
+if LLM_PROVIDER == "gemini" and not GOOGLE_API_KEY:
+    print("⚠️  LLM_PROVIDER=gemini but GOOGLE_API_KEY is not set")
     print("   Set it with: export GOOGLE_API_KEY='your-key-here'")
 
 # =============================================================================
@@ -85,8 +103,11 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("CONFIGURATION")
     print("=" * 70)
+    print(f"LLM Provider: {LLM_PROVIDER}")
     print(f"API Key Set: {bool(GOOGLE_API_KEY)}")
     print(f"Use Google AI: {USE_GOOGLE_AI}")
+    print(f"Ollama Host: {OLLAMA_HOST}")
+    print(f"Ollama Model: {OLLAMA_MODEL}")
     print(f"Primary Model: {GEMINI_MODEL}")
     print(f"Fallback Models: {', '.join(FALLBACK_MODELS[:2])}...")
     print(f"Max Fix Retries: {MAX_FIX_RETRIES}")

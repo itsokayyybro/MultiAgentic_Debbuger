@@ -1,16 +1,18 @@
 """
 LLM Client Module
 
-Using google.generativeai with automatic model fallback
+Supports Gemini (google.generativeai) and Ollama (local) with fallback.
 """
 
 import json
 import os
 import re
 import time
+import urllib.request
 from typing import Dict, Any, Optional
 
 from config import (
+    LLM_PROVIDER,
     USE_GOOGLE_AI,
     GOOGLE_API_KEY,
     GEMINI_MODEL,
@@ -21,6 +23,9 @@ from config import (
     MAX_API_RETRIES,
     INITIAL_RETRY_DELAY,
     RETRY_BACKOFF_MULTIPLIER,
+    OLLAMA_HOST,
+    OLLAMA_MODEL,
+    OLLAMA_TIMEOUT,
 )
 
 # =============================================================================
@@ -30,19 +35,30 @@ from config import (
 current_model = None
 model_instance = None
 _GEMINI_INITIALIZED = False
-_current_model_name = GEMINI_MODEL
+_current_provider = LLM_PROVIDER
+_current_model_name = (
+    GEMINI_MODEL if LLM_PROVIDER == "gemini" else
+    OLLAMA_MODEL if LLM_PROVIDER == "ollama" else
+    "mock"
+)
 
 # =============================================================================
 # INITIALIZE GEMINI
 # =============================================================================
 
-if USE_GOOGLE_AI and GOOGLE_API_KEY:
+def initialize_gemini() -> bool:
+    """Initializes Gemini client if possible."""
+    global model_instance, _GEMINI_INITIALIZED, _current_model_name
+
+    if not GOOGLE_API_KEY:
+        _GEMINI_INITIALIZED = False
+        return False
+
     try:
         import google.generativeai as genai
-        
+
         genai.configure(api_key=GOOGLE_API_KEY)
-        
-        # Create model instance
+
         model_instance = genai.GenerativeModel(
             GEMINI_MODEL,
             generation_config={
@@ -50,23 +66,28 @@ if USE_GOOGLE_AI and GOOGLE_API_KEY:
                 "max_output_tokens": MAX_OUTPUT_TOKENS,
             }
         )
-        
+
         _GEMINI_INITIALIZED = True
-        print(f"✅ Gemini initialized: {GEMINI_MODEL}")
-        
+        _current_model_name = GEMINI_MODEL
+        if DEBUG_LLM:
+            print(f"✅ Gemini initialized: {GEMINI_MODEL}")
+        return True
+
     except ImportError:
         print("❌ google-generativeai not installed")
         print("   Install: pip install google-generativeai")
         _GEMINI_INITIALIZED = False
-        
+        return False
+
     except Exception as e:
         print(f"⚠️  Primary model '{GEMINI_MODEL}' init failed: {e}")
-        print(f"   Will try fallback models on first call")
+        print("   Will try fallback models on first call")
         _GEMINI_INITIALIZED = False
-else:
-    if not GOOGLE_API_KEY:
-        print("ℹ️  No GOOGLE_API_KEY - using mock mode")
-    _GEMINI_INITIALIZED = False
+        return False
+
+
+if USE_GOOGLE_AI and GOOGLE_API_KEY:
+    initialize_gemini()
 
 # =============================================================================
 # MOCK LLM
@@ -96,6 +117,37 @@ def mock_llm(prompt: str) -> str:
         })
     
     return "{}"
+
+# =============================================================================
+# OLLAMA CLIENT
+# =============================================================================
+
+def call_ollama(prompt: str) -> str:
+    """Calls local Ollama server and returns response text."""
+    payload = {
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": TEMPERATURE,
+        },
+    }
+
+    if MAX_OUTPUT_TOKENS:
+        payload["options"]["num_predict"] = MAX_OUTPUT_TOKENS
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        f"{OLLAMA_HOST.rstrip('/')}/api/generate",
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    with urllib.request.urlopen(req, timeout=OLLAMA_TIMEOUT) as response:
+        body = response.read().decode("utf-8")
+        result = json.loads(body)
+        return result.get("response", "").strip()
 
 # =============================================================================
 # MODEL FALLBACK
@@ -186,69 +238,54 @@ def classify_error(error: Exception) -> str:
 # LLM CALL WITH AUTOMATIC FALLBACK
 # =============================================================================
 
-def call_llm(prompt: str) -> str:
-    """
-    Calls LLM with automatic model fallback and error handling.
-    
-    Returns:
-        str: LLM response
-    """
+def call_gemini(prompt: str) -> str:
+    """Calls Gemini with automatic model fallback and error handling."""
     global model_instance, _GEMINI_INITIALIZED, _current_model_name
-    
-    # If not initialized, try fallback models first
+
     if not _GEMINI_INITIALIZED:
         if GOOGLE_API_KEY:
-            print("🔄 Primary model not initialized, trying fallbacks...")
-            if try_fallback_models():
-                # Fallback succeeded, continue with call
-                pass
-            else:
-                # All models failed, use mock
+            if DEBUG_LLM:
+                print("🔄 Gemini not initialized, trying fallbacks...")
+            if not try_fallback_models():
                 if DEBUG_LLM:
                     print("ℹ️  Using mock mode (no models available)")
                 return mock_llm(prompt)
         else:
-            # No API key, use mock
             if DEBUG_LLM:
                 print("ℹ️  Using mock mode (no API key)")
             return mock_llm(prompt)
-    
-    # Retry loop for transient errors
+
     retry_delay = INITIAL_RETRY_DELAY
     last_error = None
-    
+
     for attempt in range(MAX_API_RETRIES + 1):
         try:
             if DEBUG_LLM:
                 print(f"📤 Calling {_current_model_name} (attempt {attempt + 1})...")
-            
+
             response = model_instance.generate_content(prompt)
-            
+
             if DEBUG_LLM:
                 print(f"✅ Response received ({len(response.text)} chars)")
-            
+
             return response.text.strip()
-            
+
         except Exception as e:
             last_error = e
             error_category = classify_error(e)
-            
+
             if DEBUG_LLM:
                 print(f"⚠️  Error: {type(e).__name__} ({error_category})")
                 print(f"    Message: {str(e)[:100]}")
-            
-            # Handle different error types
+
             if error_category == "model":
-                # Model not available - try fallback
                 print(f"❌ Model '{_current_model_name}' not available")
                 if try_fallback_models():
-                    # Retry with fallback model
                     continue
-                else:
-                    print("⚠️  All models failed, falling back to mock mode\n")
-                    return mock_llm(prompt)
-            
-            elif error_category == "auth":
+                print("⚠️  All models failed, falling back to mock mode\n")
+                return mock_llm(prompt)
+
+            if error_category == "auth":
                 print("\n" + "=" * 70)
                 print("❌ AUTHENTICATION ERROR")
                 print("=" * 70)
@@ -261,8 +298,8 @@ def call_llm(prompt: str) -> str:
                 print("=" * 70)
                 print("\n⚠️  Falling back to mock mode\n")
                 return mock_llm(prompt)
-            
-            elif error_category == "quota":
+
+            if error_category == "quota":
                 print("\n" + "=" * 70)
                 print("❌ QUOTA EXHAUSTED")
                 print("=" * 70)
@@ -279,29 +316,63 @@ def call_llm(prompt: str) -> str:
                 print("=" * 70)
                 print("\n⚠️  Falling back to mock mode\n")
                 return mock_llm(prompt)
-            
-            elif error_category in ["network", "server"]:
-                # Retry transient errors
+
+            if error_category in ["network", "server"]:
                 if attempt < MAX_API_RETRIES:
                     print(f"⚠️  {error_category.upper()} error, retrying in {retry_delay}s...")
                     time.sleep(retry_delay)
                     retry_delay *= RETRY_BACKOFF_MULTIPLIER
                     continue
-                else:
-                    print(f"❌ {error_category.upper()} error after {MAX_API_RETRIES} retries")
-                    print("⚠️  Falling back to mock mode\n")
-                    return mock_llm(prompt)
-            
-            else:
-                # Unknown error
-                print(f"\n❌ Unexpected error: {type(e).__name__}")
-                print(f"   {str(e)[:150]}")
+                print(f"❌ {error_category.upper()} error after {MAX_API_RETRIES} retries")
                 print("⚠️  Falling back to mock mode\n")
                 return mock_llm(prompt)
-    
-    # Exhausted all retries
+
+            print(f"\n❌ Unexpected error: {type(e).__name__}")
+            print(f"   {str(e)[:150]}")
+            print("⚠️  Falling back to mock mode\n")
+            return mock_llm(prompt)
+
     if last_error:
         print(f"❌ All retries exhausted: {last_error}")
+    return mock_llm(prompt)
+
+
+def call_llm(prompt: str) -> str:
+    """
+    Routes calls to the selected LLM provider with fallback.
+
+    Returns:
+        str: LLM response
+    """
+    global _current_provider, _current_model_name
+
+    if LLM_PROVIDER == "ollama":
+        try:
+            if DEBUG_LLM:
+                print(f"📤 Calling Ollama ({OLLAMA_MODEL})...")
+            _current_provider = "ollama"
+            _current_model_name = OLLAMA_MODEL
+            return call_ollama(prompt)
+        except Exception as e:
+            if DEBUG_LLM:
+                print(f"⚠️  Ollama error: {type(e).__name__} - {str(e)[:120]}")
+            if GOOGLE_API_KEY:
+                if DEBUG_LLM:
+                    print("🔁 Falling back to Gemini")
+                initialize_gemini()
+                _current_provider = "gemini"
+                return call_gemini(prompt)
+            if DEBUG_LLM:
+                print("ℹ️  Falling back to mock mode")
+            return mock_llm(prompt)
+
+    if LLM_PROVIDER == "gemini":
+        _current_provider = "gemini"
+        if not _GEMINI_INITIALIZED:
+            initialize_gemini()
+        return call_gemini(prompt)
+
+    _current_provider = "mock"
     return mock_llm(prompt)
 
 # =============================================================================
@@ -415,7 +486,13 @@ def get_current_model() -> str:
     """Returns the currently active model name."""
     return _current_model_name
 
+
+def get_current_provider() -> str:
+    """Returns the currently active provider."""
+    return _current_provider
+
 if __name__ == "__main__":
-    print(f"Initialized: {_GEMINI_INITIALIZED}")
+    print(f"Provider: {_current_provider}")
+    print(f"Gemini Initialized: {_GEMINI_INITIALIZED}")
     print(f"Current Model: {_current_model_name}")
     test_connection()

@@ -103,7 +103,8 @@ Software debugging consumes **30-50% of development time**, with complex issues 
 
 - Python 3.9 or higher
 - pip package manager
-- API key for OpenAI or Anthropic (for LLM backend)
+- Optional: Ollama (local LLM backend)
+- Optional: Gemini API key (cloud LLM backend)
 
 ### Setup
 
@@ -124,17 +125,46 @@ Software debugging consumes **30-50% of development time**, with complex issues 
    pip install -r requirements.txt
    ```
 
-4. **Configure API keys**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your API keys
-   ```
+4. **Choose an LLM provider**
 
-   Required environment variables:
+   **Option A: Ollama (local, no API key)**
+
+   1. Install Ollama: https://ollama.com/download
+   2. Pull a model (example):
+      ```bash
+      ollama pull llama3.1:8b
+      ```
+   3. Start Ollama (usually runs automatically as a service):
+      ```bash
+      ollama serve
+      ```
+   4. Set environment variables:
+      ```bash
+      export LLM_PROVIDER=ollama
+      export OLLAMA_MODEL=llama3.1:8b
+      export OLLAMA_HOST=http://localhost:11434
+      ```
+
+   **Option B: Gemini (cloud)**
+
+   1. Get API key: https://aistudio.google.com/app/apikey
+   2. Set environment variables:
+      ```bash
+      export LLM_PROVIDER=gemini
+      export GOOGLE_API_KEY=your_google_key_here
+      ```
+
+   Provider environment variables:
    ```
-   OPENAI_API_KEY=your_openai_key_here
-   # OR
-   ANTHROPIC_API_KEY=your_anthropic_key_here
+   # Provider selection
+   LLM_PROVIDER=ollama   # or "gemini" or "mock"
+
+   # Ollama (local)
+   OLLAMA_HOST=http://localhost:11434
+   OLLAMA_MODEL=llama3.1:8b
+
+   # Gemini (cloud)
+   GOOGLE_API_KEY=your_google_key_here
    ```
 
 5. **Run the system**
