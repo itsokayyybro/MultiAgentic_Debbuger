@@ -255,9 +255,33 @@ def debug_code_endpoint():
             try:
                 result = debug_code(code)
                 
-                # If the real orchestrator doesn't provide detailed errors, add them
-                if 'errors_detail' not in result:
-                    result['errors_detail'] = analyze_code_errors(code)
+                # Transform orchestrator result to match expected format
+                # Orchestrator returns: detected_errors, fix_attempts (list), status, final_code, original_code
+                # App expects: errors_found, fix_attempts (int), status, final_code, errors_detail, fixes_applied
+                
+                # Map detected_errors to errors_detail
+                if 'detected_errors' in result and 'errors_detail' not in result:
+                    errors = result.get('detected_errors', [])
+                    result['errors_detail'] = [
+                        {
+                            'line': e.get('line'),
+                            'type': e.get('type', 'Unknown'),
+                            'severity': '🔴' if e.get('type') == 'Syntax' else '🟡',
+                            'description': e.get('description', 'Unknown error')
+                        }
+                        for e in errors
+                    ]
+                else:
+                    result['errors_detail'] = result.get('errors_detail', analyze_code_errors(code))
+                
+                # Set errors_found as count
+                result['errors_found'] = len(result.get('errors_detail', []))
+                
+                # Get fix_attempts count (orchestrator returns a list of attempts)
+                attempts_list = result.get('fix_attempts', [])
+                result['fix_attempts'] = len(attempts_list) if isinstance(attempts_list, list) else 1
+                
+                # Generate fixes_applied if not present
                 if 'fixes_applied' not in result:
                     original_code = code
                     fixed_code = result.get('final_code', code)
@@ -266,12 +290,6 @@ def debug_code_endpoint():
                         fixed_code, 
                         result.get('errors_detail', [])
                     )
-                
-                # Ensure proper data types
-                if 'errors_found' in result:
-                    result['errors_found'] = int(result['errors_found'])
-                if 'fix_attempts' in result:
-                    result['fix_attempts'] = int(result['fix_attempts'])
                 
                 print("✅ Debugging completed successfully!")
             except Exception as e:
