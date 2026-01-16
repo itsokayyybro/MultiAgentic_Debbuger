@@ -3,157 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Multi-Agentic Code Debugger</title>
+    <title>ERROR IS ART · FRA!DEBUG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --accent-pink: #FF006B;
+            --accent-yellow: #FFE500;
+            --accent-blue: #00D9FF;
+            --accent-green: #00FF87;
+            --gray-dark: #1A1A1A;
+            --gray-mid: #4A4A4A;
+            --gray-light: #D9D9D9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @keyframes doodleFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(10px, -10px) rotate(5deg); }
+            50% { transform: translate(-5px, 5px) rotate(-3deg); }
+            75% { transform: translate(5px, 10px) rotate(2deg); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(125deg, 
+                var(--black) 0%, 
+                var(--gray-dark) 20%,
+                var(--black) 40%,
+                #0D0D0D 60%,
+                var(--black) 80%,
+                var(--gray-dark) 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            color: var(--white);
             min-height: 100vh;
-            padding: 20px;
-            color: #fff;
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Dynamic Doodle Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 0, 107, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 217, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 229, 0, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '⚡';
+            position: fixed;
+            font-size: 200px;
+            opacity: 0.02;
+            top: 10%;
+            right: 5%;
+            animation: doodleFloat 15s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
         }
 
+        /* Doodle Elements */
+        .doodle {
+            position: fixed;
+            font-size: 80px;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+            animation: doodleFloat 20s ease-in-out infinite;
+        }
+
+        .doodle-1 { top: 15%; left: 8%; animation-delay: 0s; }
+        .doodle-2 { top: 60%; right: 10%; animation-delay: 3s; font-size: 120px; }
+        .doodle-3 { bottom: 20%; left: 15%; animation-delay: 6s; font-size: 100px; }
+
+
         header {
-            text-align: center;
+            background: var(--white);
+            color: var(--black);
+            padding: 60px 50px;
             margin-bottom: 40px;
-            animation: fadeInDown 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+            border: 8px solid var(--black);
+            box-shadow: 20px 20px 0 var(--accent-pink);
+        }
+
+        header::before {
+            content: '!';
+            position: absolute;
+            font-size: 400px;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            opacity: 0.1;
+            top: -80px;
+            right: -50px;
+            transform: rotate(-15deg);
+            z-index: 0;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-mark {
+            display: inline-block;
+            background: var(--black);
+            color: var(--accent-yellow);
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transform: rotate(-2deg);
+            margin-bottom: 30px;
+            border: 3px solid var(--black);
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 0.9;
+            margin: 0 0 20px 0;
+            text-transform: uppercase;
+            color: var(--black);
+            position: relative;
         }
 
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
+        h1 .error-text {
+            color: var(--accent-pink);
+            display: block;
         }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+        h1 .art-text {
+            color: var(--black);
+            -webkit-text-stroke: 3px var(--accent-blue);
+            paint-order: stroke fill;
+            display: block;
         }
 
-        .panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            animation: fadeInUp 0.6s ease-out;
+        .manifesto {
+            font-size: 20px;
+            font-weight: 500;
+            max-width: 600px;
+            line-height: 1.4;
+            margin: 30px 0;
+            color: var(--gray-dark);
         }
 
-        .panel h2 {
-            margin-bottom: 15px;
-            font-size: 1.5rem;
+        .manifesto strong {
+            color: var(--black);
+            font-weight: 700;
+        }
+
+        .campaign-tags {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 30px;
         }
 
-        .editor-wrapper {
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .CodeMirror {
-            height: 500px;
+        .tag {
+            background: var(--black);
+            color: var(--white);
+            padding: 10px 20px;
+            font-weight: 600;
             font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 3px solid var(--black);
+            transform: rotate(-1deg);
+            transition: all 0.2s ease;
         }
+
+        .tag:nth-child(2) { transform: rotate(1deg); background: var(--accent-pink); }
+        .tag:nth-child(3) { transform: rotate(-1.5deg); background: var(--accent-blue); color: var(--black); }
+        .tag:nth-child(4) { transform: rotate(0.5deg); background: var(--accent-green); color: var(--black); }
 
         .controls {
             display: flex;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-top: 40px;
             flex-wrap: wrap;
         }
 
         button {
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
+            padding: 18px 36px;
+            border: 4px solid var(--black);
+            background: var(--white);
+            color: var(--black);
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            transition: all 0.2s ease;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            box-shadow: 6px 6px 0 var(--black);
+        }
+
+        button:hover {
+            transform: translate(3px, 3px);
+            box-shadow: 3px 3px 0 var(--black);
+        }
+
+        button:active {
+            transform: translate(6px, 6px);
+            box-shadow: 0 0 0 var(--black);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            flex: 1;
-            justify-content: center;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            background: var(--accent-pink);
+            color: var(--white);
+            border-color: var(--black);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
+            background: var(--white);
+            color: var(--black);
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .btn-accent {
+            background: var(--accent-yellow);
+            color: var(--black);
         }
 
-        .btn-copy {
-            background: #10b981;
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
-        .btn-copy:hover {
-            background: #059669;
-            transform: translateY(-1px);
+        .panel {
+            background: var(--white);
+            border: 6px solid var(--black);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-dark {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--black);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        .panel-dark h2 {
+            color: var(--white);
+        }
+
+        .panel h2 .icon {
+            width: 50px;
+            height: 50px;
+            background: var(--accent-pink);
+            display: grid;
+            place-items: center;
+            color: var(--white);
+            font-size: 24px;
+            border: 3px solid var(--black);
+            font-weight: 700;
+        }
+
+        .panel-dark h2 .icon {
+            background: var(--accent-yellow);
+            color: var(--black);
+        }
+
+        .panel-subtext {
+            color: var(--gray-mid);
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .panel-dark .panel-subtext {
+            color: var(--gray-light);
+        }
+
+        .editor-wrapper {
+            border: 4px solid var(--black);
+            background: #1A1A1A;
+            overflow: hidden;
+            box-shadow: 8px 8px 0 var(--accent-blue);
+        }
+
+        .CodeMirror {
+            height: 500px;
+            font-size: 15px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: #1A1A1A;
+            color: var(--white);
+        }
+
+        .CodeMirror-gutters {
+            background: #0D0D0D;
+            border-right: 2px solid var(--accent-pink);
+        }
+
+        .hint {
+            margin-top: 15px;
+            color: var(--gray-mid);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .status-panel {
-            min-height: 150px;
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
-        .status-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
+        .status-card {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.4s ease-out;
+            gap: 15px;
+            align-items: flex-start;
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+        }
+
+        .status-card .badge {
+            min-width: 50px;
+            height: 50px;
+            background: var(--accent-pink);
+            display: grid;
+            place-items: center;
+            color: var(--white);
+            font-weight: 800;
+            font-size: 20px;
+            border: 3px solid var(--white);
+        }
+
+        .status-card .title {
+            font-weight: 700;
+            color: var(--white);
+            font-size: 16px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .status-card .desc {
+            color: var(--gray-light);
+            font-size: 14px;
+            line-height: 1.4;
         }
 
         .result-panel {
@@ -161,95 +410,95 @@
         }
 
         .result-content {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 25px;
-        }
-
-        .errors-section, .fixes-section, .summary-section {
-            margin-bottom: 35px;
-        }
-        
-        .errors-section .section-title,
-        .fixes-section .section-title {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px 15px;
-            border-radius: 8px;
-            border-left: 4px solid #60a5fa;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
         }
 
         .section-title {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 15px;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            color: #ffffff;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            gap: 12px;
+            color: var(--white);
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        .errors-section .section-title {
+            background: var(--accent-pink);
+            color: var(--white);
+            padding: 15px 20px;
+            border: 3px solid var(--white);
+        }
+
+        .fixes-section .section-title {
+            background: var(--accent-blue);
+            color: var(--black);
+            padding: 15px 20px;
+            border: 3px solid var(--black);
         }
 
         .error-item {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border-left: 4px solid;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-left: 8px solid var(--accent-pink);
         }
 
         .error-item.syntax {
-            border-left-color: #ef4444;
+            border-left-color: var(--accent-pink);
         }
 
         .error-item.logical {
-            border-left-color: #f59e0b;
+            border-left-color: var(--accent-yellow);
         }
 
         .error-item.warning {
-            border-left-color: #eab308;
+            border-left-color: var(--accent-blue);
         }
 
         .error-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 1rem;
-            color: #ffffff;
+            gap: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: var(--white);
+            text-transform: uppercase;
         }
 
         .error-line {
-            color: #60a5fa;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
+            color: var(--accent-yellow);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
         }
 
         .error-description {
             margin-left: 30px;
-            opacity: 1;
-            line-height: 1.6;
-            color: #e5e7eb;
-            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--gray-light);
+            font-size: 15px;
         }
 
         .fixes-box {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.2);
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .fix-item {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 15px 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
             display: flex;
-            gap: 10px;
-            color: #e5e7eb;
-            font-size: 0.95rem;
-            line-height: 1.6;
+            gap: 15px;
+            color: var(--gray-light);
+            font-size: 15px;
+            line-height: 1.5;
         }
 
         .fix-item:last-child {
@@ -257,17 +506,17 @@
         }
 
         .fix-number {
-            font-weight: bold;
+            font-weight: 800;
             min-width: 30px;
-            color: #ffffff;
+            color: var(--accent-green);
+            font-size: 18px;
         }
 
         .summary-box {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%);
-            border: 3px solid rgba(16, 185, 129, 0.6);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+            background: var(--white);
+            border: 6px solid var(--black);
+            padding: 30px;
+            box-shadow: 10px 10px 0 var(--accent-yellow);
         }
 
         .summary-grid {
@@ -279,207 +528,207 @@
 
         .summary-item {
             text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: var(--black);
+            padding: 25px;
+            border: 4px solid var(--black);
         }
 
         .summary-label {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #ffffff;
-            opacity: 1;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-light);
             margin-bottom: 10px;
-            text-transform: uppercase;
             letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         .summary-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1;
         }
-        
+
         .summary-divider {
-            height: 2px;
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.5), transparent);
-            margin: 20px 0;
+            height: 4px;
+            background: var(--black);
+            margin: 30px 0;
         }
 
         .fixed-code-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px 15px;
-            border-radius: 8px;
-            border-left: 4px solid #10b981;
+            margin-bottom: 20px;
+            background: var(--accent-green);
+            color: var(--black);
+            padding: 20px 25px;
+            border: 4px solid var(--black);
+        }
+
+        .btn-copy {
+            background: var(--black);
+            color: var(--white);
+            padding: 12px 24px;
+            font-size: 14px;
+            border: 3px solid var(--black);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
         }
 
         .loading {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 20px;
             padding: 40px;
+            color: var(--white);
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--accent-pink);
+            border-radius: 0;
             animation: spin 1s linear infinite;
-        }
-
-        .success { 
-            color: #4ade80 !important; 
-            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-        }
-        .error { 
-            color: #f87171 !important; 
-        }
-        .warning { 
-            color: #fbbf24 !important; 
         }
 
         .copy-notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            animation: slideInRight 0.3s ease-out;
+            top: 30px;
+            right: 30px;
+            background: var(--accent-green);
+            color: var(--black);
+            padding: 20px 30px;
+            border: 4px solid var(--black);
+            box-shadow: 8px 8px 0 var(--black);
             z-index: 1000;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .status-success {
+            color: var(--accent-green) !important;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .status-error {
+            color: var(--accent-pink) !important;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .status-warn {
+            color: var(--accent-yellow) !important;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        @media (max-width: 968px) {
+        @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
-            
+
             h1 {
-                font-size: 2rem;
+                font-size: clamp(2.5rem, 6vw, 5rem);
+            }
+
+            header {
+                padding: 40px 30px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            header {
+                padding: 30px 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .panel {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="doodle doodle-1">◐</div>
+    <div class="doodle doodle-2">✱</div>
+    <div class="doodle doodle-3">◈</div>
+
     <div class="container">
         <header>
-            <h1>🤖 Multi-Agentic Code Debugger</h1>
-            <p class="subtitle">Powered by AI agents • Automatic bug detection & fixing</p>
+            <div class="header-content">
+                <div class="brand-mark">MAD</div>
+                <h1>
+                    <span class="error-text">ERROR</span>
+                    <span class="art-text">IS ART</span>
+                </h1>
+                <p class="manifesto">
+                    <strong>Stop Chasing Perfect.</strong> Every bug is a brushstroke. Every crash is creation. 
+                    Your messiest code holds your truest vision. Paste it. Break it. Find power in the flaw.
+                </p>
+                <div class="campaign-tags">
+                    <div class="tag">Authenticity Over Polish</div>
+                    <div class="tag">The Art of Error</div>
+                    <div class="tag">100% You</div>
+                    <div class="tag">Define Your Code</div>
+                </div>
+                <div class="controls">
+                    <button id="debugBtn" class="btn-primary">⚡ EMBRACE THE ERROR</button>
+                    <button id="clearBtn" class="btn-secondary">↻ FRESH CANVAS</button>
+                    <button id="exampleBtn" class="btn-accent">✦ LOAD CHAOS</button>
+                </div>
+            </div>
         </header>
-
-        <div class="controls">
-            <button id="debugBtn" class="btn-primary">
-                <span>🔍</span>
-                <span>Debug Code</span>
-            </button>
-            <button id="clearBtn" class="btn-secondary">
-                <span>🗑️</span>
-                <span>Clear</span>
-            </button>
-            <button id="exampleBtn" class="btn-secondary">
-                <span>📝</span>
-                <span>Load Example</span>
-            </button>
-        </div>
 
         <div class="main-content">
             <div class="panel">
-                <h2>
-                    <span>📝</span>
-                    <span>Your Code</span>
-                </h2>
+                <h2><span class="icon">⌘</span><span>Your Chaos</span></h2>
+                <div class="panel-subtext">Drop your broken code here. Raw. Unfiltered. Imperfect. That's where art begins.</div>
                 <div class="editor-wrapper">
                     <textarea id="codeInput"></textarea>
                 </div>
+                <div class="hint">→ Bugs are not failures. They're your signature.</div>
             </div>
 
-            <div class="panel">
-                <h2>
-                    <span>📊</span>
-                    <span>Status</span>
-                </h2>
+            <div class="panel panel-dark">
+                <h2><span class="icon">◎</span><span>Process</span></h2>
+                <div class="panel-subtext">Watch errors transform into insights. Beauty in breakdown.</div>
                 <div class="status-panel" id="statusPanel">
-                    <div class="status-item">
-                        <span style="font-size: 1.5rem;">💡</span>
+                    <div class="status-card">
+                        <div class="badge">01</div>
                         <div>
-                            <div style="font-weight: 600;">Ready</div>
-                            <div style="opacity: 0.8;">Enter your buggy code and click Debug!</div>
+                            <div class="title">Ready</div>
+                            <div class="desc">Your canvas awaits. Paste the chaos.</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="badge">02</div>
+                        <div>
+                            <div class="title">Error = Art</div>
+                            <div class="desc">Every flaw tells a story.</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel result-panel" id="resultPanel" style="display: none;">
-            <h2>
-                <span>✨</span>
-                <span>Analysis Results</span>
-            </h2>
+        <div class="panel panel-dark result-panel" id="resultPanel" style="display: none;">
+            <h2><span class="icon">✸</span><span>The Transformation</span></h2>
             <div class="result-content" id="resultContent"></div>
         </div>
     </div>
 
     <script>
-        // Initialize CodeMirror
         const editor = CodeMirror.fromTextArea(document.getElementById('codeInput'), {
             mode: 'python',
             theme: 'dracula',
@@ -496,7 +745,6 @@
         const resultPanel = document.getElementById('resultPanel');
         const resultContent = document.getElementById('resultContent');
 
-        // Example buggy code
         const exampleCode = `def calculate_average(numbers)
     total = 0
     for num in numbers
@@ -520,166 +768,145 @@ def factorial(n)
 result = calculate_average([1, 2, 3, 4, 5])
 print(result)`;
 
-        // Load example code
         exampleBtn.addEventListener('click', () => {
             editor.setValue(exampleCode);
         });
 
-        // Clear editor
         clearBtn.addEventListener('click', () => {
             editor.setValue('');
             resultPanel.style.display = 'none';
             statusPanel.innerHTML = `
-                <div class="status-item">
-                    <span style="font-size: 1.5rem;">💡</span>
+                <div class="status-card">
+                    <div class="badge">01</div>
                     <div>
-                        <div style="font-weight: 600;">Ready</div>
-                        <div style="opacity: 0.8;">Enter your buggy code and click Debug!</div>
+                        <div class="title">Ready</div>
+                        <div class="desc">Your canvas awaits. Paste the chaos.</div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="badge">02</div>
+                    <div>
+                        <div class="title">Error = Art</div>
+                        <div class="desc">Every flaw tells a story.</div>
                     </div>
                 </div>
             `;
         });
 
-        // Show loading state
         function showLoading() {
             statusPanel.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
                     <div>
-                        <div style="font-weight: 600;">Analyzing your code...</div>
-                        <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">
-                            AI agents are working on it
-                        </div>
+                        <div style="font-weight: 700; font-size: 18px; text-transform: uppercase;">Transforming Chaos...</div>
+                        <div style="font-size: 14px; color: var(--gray-light); margin-top: 8px;">Finding beauty in breakdown.</div>
                     </div>
                 </div>
             `;
         }
 
-        // Show copy notification
         function showCopyNotification() {
             const notification = document.createElement('div');
             notification.className = 'copy-notification';
-            notification.innerHTML = '✅ Code copied to clipboard!';
+            notification.innerHTML = '✅ CAPTURED!';
             document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            setTimeout(() => notification.remove(), 3000);
         }
 
-        // Copy to clipboard
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showCopyNotification();
-            }).catch(err => {
-                console.error('Failed to copy:', err);
-                alert('Failed to copy code. Please select and copy manually.');
-            });
+            navigator.clipboard.writeText(text)
+                .then(showCopyNotification)
+                .catch(err => {
+                    console.error('Failed to copy:', err);
+                    alert('Failed to copy code. Please select and copy manually.');
+                });
         }
 
-        // Show results
         function showResults(data) {
             const result = data.result;
             const status = result.status;
-            
-            // Debug: Log the result to see what we're getting
-            console.log('Debug - Full result:', result);
-            console.log('Debug - errors_found:', result.errors_found, 'type:', typeof result.errors_found);
-            console.log('Debug - fix_attempts:', result.fix_attempts, 'type:', typeof result.fix_attempts);
-            
+
             if (status === 'FIXED' || status === 'SUCCESS') {
                 statusPanel.innerHTML = `
-                    <div class="status-item" style="background: rgba(16, 185, 129, 0.2);">
-                        <span style="font-size: 1.5rem;">✅</span>
+                    <div class="status-card" style="border-color: var(--accent-green); background: rgba(0, 255, 135, 0.1);">
+                        <div class="badge" style="background: var(--accent-green); color: var(--black); border-color: var(--black);">✓</div>
                         <div>
-                            <div style="font-weight: 600; color: #4ade80;">Success!</div>
-                            <div style="opacity: 0.9;">Code has been debugged successfully</div>
+                            <div class="title" style="color: var(--accent-green);">TRANSFORMED</div>
+                            <div class="desc">Your errors became art. Perfection is overrated.</div>
                         </div>
                     </div>
                 `;
 
                 let html = '';
 
-                // Errors Section
                 if (result.errors_detail && result.errors_detail.length > 0) {
                     html += `
-                        <div class="errors-section">
-                            <div class="section-title">
-                                🔍 Found ${result.errors_found || result.errors_detail.length} error(s):
-                            </div>
+                        <div class="errors-section" style="margin-bottom: 30px;">
+                            <div class="section-title">⚠ ERROR GALLERY · ${result.errors_found || result.errors_detail.length} FOUND</div>
                     `;
-                    
+
                     result.errors_detail.forEach((error, index) => {
                         const errorClass = error.type.toLowerCase();
                         html += `
                             <div class="error-item ${errorClass}">
                                 <div class="error-header">
-                                    <span>${index + 1}.</span>
+                                    <span>#${index + 1}</span>
                                     <span>${error.severity}</span>
                                     <span>[${error.type}]</span>
-                                    <span class="error-line">Line ${error.line}</span>
+                                    <span class="error-line">LINE ${error.line}</span>
                                 </div>
-                                <div class="error-description">
-                                    → ${error.description}
-                                </div>
+                                <div class="error-description">→ ${error.description}</div>
                             </div>
                         `;
                     });
-                    
+
                     html += '</div>';
                 }
 
-                // Fixes Section
                 if (result.fixes_applied && result.fixes_applied.length > 0) {
                     html += `
-                        <div class="fixes-section">
-                            <div class="section-title">
-                                💡 What was fixed:
-                            </div>
+                        <div class="fixes-section" style="margin-bottom: 30px;">
+                            <div class="section-title">💡 TRANSFORMATION LOG</div>
                             <div class="fixes-box">
                     `;
-                    
+
                     result.fixes_applied.forEach((fix, index) => {
                         html += `
                             <div class="fix-item">
-                                <div class="fix-number">${index + 1}.</div>
+                                <div class="fix-number">#${index + 1}</div>
                                 <div>
                                     ${fix.description}
-                                    ${fix.line ? `<span style="color: #60a5fa;"> (Line ${fix.line})</span>` : ''}
+                                    ${fix.line ? `<span style="color: var(--accent-yellow);"> (LINE ${fix.line})</span>` : ''}
                                 </div>
                             </div>
                         `;
                     });
-                    
+
                     html += `
                             </div>
                         </div>
                     `;
                 }
 
-                // Summary Section - Extract values properly
-                const errorsFound = typeof result.errors_found === 'number' ? result.errors_found : 
-                                   (result.errors_detail ? result.errors_detail.length : 0);
+                const errorsFound = typeof result.errors_found === 'number' ? result.errors_found : (result.errors_detail ? result.errors_detail.length : 0);
                 const fixAttempts = typeof result.fix_attempts === 'number' ? result.fix_attempts : 1;
-                
+
                 html += `
                     <div class="summary-section">
                         <div class="summary-divider"></div>
-                        <div class="section-title" style="font-size: 1.5rem; text-align: center; margin-bottom: 20px;">
-                            📋 SUMMARY
-                        </div>
+                        <div class="section-title" style="font-size: 32px; justify-content: center; color: var(--black);">THE NUMBERS</div>
                         <div class="summary-box">
                             <div class="summary-grid">
                                 <div class="summary-item">
-                                    <div class="summary-label">Status</div>
-                                    <div class="summary-value success">✅ FIXED</div>
+                                    <div class="summary-label">STATUS</div>
+                                    <div class="summary-value status-success">PERFECT</div>
                                 </div>
                                 <div class="summary-item">
-                                    <div class="summary-label">Errors Found</div>
+                                    <div class="summary-label">ERRORS</div>
                                     <div class="summary-value">${errorsFound}</div>
                                 </div>
                                 <div class="summary-item">
-                                    <div class="summary-label">Fix Attempts</div>
+                                    <div class="summary-label">FIXES</div>
                                     <div class="summary-value">${fixAttempts}</div>
                                 </div>
                             </div>
@@ -688,16 +915,11 @@ print(result)`;
                     </div>
                 `;
 
-                // Fixed Code Section
                 html += `
-                    <div style="margin-top: 35px;">
+                    <div style="margin-top: 40px;">
                         <div class="fixed-code-header">
-                            <div class="section-title">
-                                🎯 Fixed Code:
-                            </div>
-                            <button class="btn-copy" onclick="copyFixedCode()">
-                                📋 Copy Code
-                            </button>
+                            <div class="section-title" style="margin: 0;">🎯 YOUR MASTERPIECE</div>
+                            <button class="btn-copy" onclick="copyFixedCode()">📋 COPY</button>
                         </div>
                         <div class="editor-wrapper">
                             <textarea id="fixedCode"></textarea>
@@ -707,11 +929,8 @@ print(result)`;
 
                 resultContent.innerHTML = html;
                 resultPanel.style.display = 'block';
-
-                // Scroll to results
                 resultPanel.scrollIntoView({ behavior: 'smooth' });
 
-                // Initialize CodeMirror for fixed code
                 setTimeout(() => {
                     window.fixedEditor = CodeMirror.fromTextArea(document.getElementById('fixedCode'), {
                         mode: 'python',
@@ -720,15 +939,14 @@ print(result)`;
                         readOnly: true,
                     });
                     window.fixedEditor.setValue(result.final_code || 'No fixed code available');
-                }, 100);
-
+                }, 80);
             } else {
                 statusPanel.innerHTML = `
-                    <div class="status-item" style="background: rgba(239, 68, 68, 0.2);">
-                        <span style="font-size: 1.5rem;">⚠️</span>
+                    <div class="status-card" style="border-color: var(--accent-pink); background: rgba(255, 0, 107, 0.1);">
+                        <div class="badge" style="background: var(--accent-pink); color: var(--white);">!</div>
                         <div>
-                            <div style="font-weight: 600; color: #f87171;">Unable to Fix</div>
-                            <div style="opacity: 0.9;">${result.message || 'Could not automatically fix the code'}</div>
+                            <div class="title" style="color: var(--accent-pink);">TOO CHAOTIC</div>
+                            <div class="desc">${result.message || 'Even chaos needs structure. Try again.'}</div>
                         </div>
                     </div>
                 `;
@@ -736,7 +954,6 @@ print(result)`;
             }
         }
 
-        // Copy fixed code function
         window.copyFixedCode = function() {
             if (window.fixedEditor) {
                 const code = window.fixedEditor.getValue();
@@ -744,26 +961,24 @@ print(result)`;
             }
         };
 
-        // Show error
         function showError(message) {
             statusPanel.innerHTML = `
-                <div class="status-item" style="background: rgba(239, 68, 68, 0.2);">
-                    <span style="font-size: 1.5rem;">❌</span>
+                <div class="status-card" style="border-color: var(--accent-pink); background: rgba(255, 0, 107, 0.1);">
+                    <div class="badge" style="background: var(--accent-pink); color: var(--white);">!</div>
                     <div>
-                        <div style="font-weight: 600; color: #f87171;">Error</div>
-                        <div style="opacity: 0.9;">${message}</div>
+                        <div class="title" style="color: var(--accent-pink);">ERROR</div>
+                        <div class="desc">${message}</div>
                     </div>
                 </div>
             `;
             resultPanel.style.display = 'none';
         }
 
-        // Debug code
         debugBtn.addEventListener('click', async () => {
             const code = editor.getValue().trim();
-            
+
             if (!code) {
-                showError('Please enter some code to debug');
+                showError('Empty canvas. Paste your messy code first.');
                 return;
             }
 
@@ -774,9 +989,7 @@ print(result)`;
             try {
                 const response = await fetch('/api/debug', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code }),
                 });
 
@@ -785,17 +998,16 @@ print(result)`;
                 if (response.ok && data.status === 'success') {
                     showResults(data);
                 } else {
-                    showError(data.message || 'An error occurred during debugging');
+                    showError(data.message || 'Something broke. But hey, that\'s art.');
                 }
             } catch (error) {
-                showError('Failed to connect to the server. Please make sure the backend is running.');
+                showError('Connection failed. Even our errors have errors.');
                 console.error('Error:', error);
             } finally {
                 debugBtn.disabled = false;
             }
         });
 
-        // Set default example on load
         editor.setValue(exampleCode);
     </script>
 </body>
